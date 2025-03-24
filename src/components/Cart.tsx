@@ -5,23 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { clearCart, removeProduct, updateProduct } from "../redux/cartSlice";
 import { RootState } from "../redux/store";
 import { useNavigate } from "react-router-dom";
-import { Product } from "../queries/Products";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase/firebaseConfig";
+import { Product } from "../components/Products";
+import { useAuth } from "../context/AuthProvider";
 
 const Cart: React.FC = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setIsLoggedIn(true);
-            } else {
-                setIsLoggedIn(false);
-            }
-        });
-        return () => unsubscribe();
-    }, []);
+    const { isLoggedIn } = useAuth();
 
     const dispatch = useDispatch();
     const cart = useSelector((state: RootState) => state.cart.cart);
@@ -36,7 +24,7 @@ const Cart: React.FC = () => {
         return total.toFixed(2);
     };
 
-    const handleRemoveProduct = (productId: number) => {
+    const handleRemoveProduct = (productId: string) => {
         dispatch(removeProduct(productId));
     };
 
