@@ -28,6 +28,7 @@ const NavBar: React.FC = () => {
           <Nav className="ms-auto">
             <Nav.Link href="/">Home</Nav.Link>
             <Nav.Link href="/cart">Cart</Nav.Link>
+            <Nav.Link href="/products">Products</Nav.Link>
             { isLoggedIn && <Nav.Link href="/account">Account</Nav.Link> }
             { isLoggedIn ?
               <Nav.Link onClick={handleLogout}>Log Out</Nav.Link> :

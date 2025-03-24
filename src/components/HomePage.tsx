@@ -1,29 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Col, Container, Button, Card, Row, Badge, Form } from "react-bootstrap";
 import PageLayout from "./PageLayout";
-import { useProducts, useProductsByCategory, Product } from "../queries/Products";
-import useCategories from "../queries/Categories";
-import { useDispatch } from 'react-redux';
+import { db } from "../firebase/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
+import { Product } from "./Products";
 import { addProduct } from "../redux/cartSlice";
+import { useDispatch } from "react-redux";
 
 const HomePage: React.FC = () => {
     const dispatch = useDispatch();
+
+    const [products, setProducts] = useState<Product[]>([]);
+    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<string[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [error, setError] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setIsLoading(true);
+                const querySnapshot = await getDocs(collection(db, 'products'));
+                const dataArray = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as Product[];
+                setProducts(dataArray);
+            } catch (error) {
+                console.error("Error fetching products: ", error);
+                setError("Error fetching products");
+            }
+            setIsLoading(false);
+        };
+        fetchData();
+      }, [products]);
 
     const handleAddProduct = (productToAdd: Product) => {
         dispatch(addProduct(productToAdd));
         alert(`${productToAdd.title} added to cart!`);
     };
 
-    const { data: categories } = useCategories();
-    const [selectedCategory, setSelectedCategory] = useState<string>("");
-
-    const { data: products, isLoading, error } = useProducts();
-    const { data: filteredProducts, isLoading: isFiltering } = useProductsByCategory(selectedCategory);
-
     const displayProducts = selectedCategory ? filteredProducts : products;
 
     const handleFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedCategory(e.target.value);
+        if (e.target.value) {
+            const filteredProducts = products.filter(product => product.category === selectedCategory);
+            setFilteredProducts(filteredProducts);
+        }
     };
 
     return (
@@ -37,7 +62,7 @@ const HomePage: React.FC = () => {
 
             <Container>
                 <div className="my-3">
-                    <h2 className="display-5 mb-3">Products</h2>
+                    <h2 className="display-5 mb-3">Store</h2>
 
                     <Form.Select className="w-25 mb-3" onChange={handleFilter}>
                         <option value="">Filter by category</option>
@@ -46,8 +71,8 @@ const HomePage: React.FC = () => {
                         ))}
                     </Form.Select>
 
-                    {(isLoading || isFiltering) && <p>Loading products...</p>}
-                    {error && <p>Error occurred while fetching products</p>}
+                    {isLoading && <p>Loading products...</p>}
+                    {error && <p>{error}</p>}
 
                     <Row>
                         {displayProducts?.map(product => (
