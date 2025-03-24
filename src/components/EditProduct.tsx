@@ -1,12 +1,13 @@
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { db } from "../firebase/firebaseConfig";
 import PageLayout from "../components/PageLayout";
 import { Container, Form, FloatingLabel, Button } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { collection, addDoc } from "firebase/firestore";
+import { useNavigate, useParams } from "react-router-dom";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Product } from "./Products";
 
-const AddProduct: React.FC = () => {
+const EditProduct: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Omit<Product, 'id'>>({
     title: "",
@@ -23,6 +24,38 @@ const AddProduct: React.FC = () => {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (id) {
+        try {
+          const productDoc = doc(db, "products", id);
+          const productSnapshot = await getDoc(productDoc);
+          if (productSnapshot.exists()) {
+            const productData = productSnapshot.data() as Product;
+            setData({
+              title: productData.title,
+              price: productData.price,
+              description: productData.description,
+              category: productData.category,
+              image: productData.image || "",
+              rating: {
+                rate: productData.rating.rate,
+                count: productData.rating.count,
+              },
+              stock: productData.stock,
+            });
+          } else {
+            setError("Product not found");
+          }
+        } catch (error) {
+          console.error("Error fetching product: ", error);
+          setError("Error fetching product");
+        }
+      }
+    };
+    fetchProduct();
+  }, [id]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === "rate" || name === "count") {
@@ -38,26 +71,18 @@ const AddProduct: React.FC = () => {
     }
   };
 
-  const handleAddProduct = async (e: FormEvent) => {
+  const handleUpdateProduct = async (e: FormEvent) => {
     e.preventDefault();
-    try {
-      await addDoc(collection(db, 'products'), data);
-      alert('Product added!');
-      setData({
-        title: "",
-        price: "",
-        description: "",
-        category: "",
-        image: "",
-        rating: {
-          rate: 0,
-          count: 0,
-        },
-        stock: 0,
-      });
-      navigate("/products");
-    } catch (error) {
-      setError('Error adding product');
+    if (id) {
+      try {
+        const productDoc = doc(db, "products", id);
+        await updateDoc(productDoc, data);
+        alert('Product updated!');
+        navigate("/products");
+      } catch (error) {
+        console.error("Error updating product: ", error);
+        setError("Error updating product");
+      }
     }
   };
 
@@ -65,13 +90,13 @@ const AddProduct: React.FC = () => {
     <PageLayout>
       <Container>
         <div className="my-3">
-          <h2 className="display-5 mb-3">Add Product</h2>
+          <h2 className="display-5 mb-3">Edit Product</h2>
         </div>
       </Container>
 
       <Container>
         <div className="my-3 bg-light rounded p-5 text-white">        
-          <Form onSubmit={handleAddProduct} className="text-dark">
+          <Form onSubmit={handleUpdateProduct} className="text-dark">
             <FloatingLabel
               controlId="floatingTitle"
               label="Title"
@@ -136,7 +161,7 @@ const AddProduct: React.FC = () => {
             >
               <Form.Control name="stock" type="number" placeholder="Stock" value={data.stock} onChange={handleChange} min={1} required />
             </FloatingLabel>
-            <Button variant="warning" type="submit" className="w-100 my-2">Add Product</Button>
+            <Button variant="warning" type="submit" className="w-100 my-2">Update Product</Button>
             {error && <p className="text-danger">{error}</p>}
           </Form>
         </div>
@@ -145,4 +170,4 @@ const AddProduct: React.FC = () => {
   );
 };
 
-export default AddProduct;
+export default EditProduct;

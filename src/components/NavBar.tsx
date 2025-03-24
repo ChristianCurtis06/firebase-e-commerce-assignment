@@ -1,11 +1,16 @@
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
-import { Container, Navbar, Nav } from "react-bootstrap";
+import { Container, Navbar, Nav, Badge } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 const NavBar: React.FC = () => {
   const { isLoggedIn } = useAuth();
+  const cart = useSelector((state: RootState) => state.cart.cart);
+  const [productCount, setProductCount] = useState<number>(0);
 
   const navigate = useNavigate();
 
@@ -19,6 +24,11 @@ const NavBar: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const countTotal = cart.reduce((acc, product) => acc + (product.quantity || 1), 0);
+    setProductCount(countTotal);
+  }, [cart]);
+
   return (
     <Navbar bg="warning" expand="lg" variant="dark">
       <Container fluid>
@@ -27,7 +37,7 @@ const NavBar: React.FC = () => {
         <Navbar.Collapse id="navbarNav">
           <Nav className="ms-auto">
             <Nav.Link href="/">Home</Nav.Link>
-            <Nav.Link href="/cart">Cart</Nav.Link>
+            <Nav.Link href="/cart">Cart<Badge className="ms-1 bg-white text-dark">{productCount}</Badge></Nav.Link>
             <Nav.Link href="/products">Products</Nav.Link>
             { isLoggedIn && <Nav.Link href="/account">Account</Nav.Link> }
             { isLoggedIn ?
