@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Col, Container, Button, Card, Row, Badge, Form } from "react-bootstrap";
 import PageLayout from "./PageLayout";
 import { db } from "../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import { Product } from "./Products";
+import { db } from "../firebase/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
+import { Product } from "./Products";
 import { addProduct } from "../redux/cartSlice";
+import { useDispatch } from "react-redux";
 import { useDispatch } from "react-redux";
 
 const HomePage: React.FC = () => {

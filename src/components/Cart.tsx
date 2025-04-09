@@ -35,6 +35,7 @@ const Cart: React.FC = () => {
     };
 
     const handleRemoveProduct = (productId: string) => {
+    const handleRemoveProduct = (productId: string) => {
         dispatch(removeProduct(productId));
     };
 
